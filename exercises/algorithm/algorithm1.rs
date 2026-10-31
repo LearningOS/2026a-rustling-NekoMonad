@@ -2,7 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -69,15 +68,49 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
-	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+    pub fn merge(list_a: LinkedList<T>, list_b: LinkedList<T>) -> Self
+    where
+        T: Ord,
+    {
+        let mut merged = Self::new();
+        let mut a = list_a.start;
+        let mut b = list_b.start;
+
+        while a.is_some() || b.is_some() {
+            // SAFETY: The consumed lists own disjoint, valid nodes. Each node
+            // is detached from its input before being linked into the result.
+            unsafe {
+                let mut node = match (a, b) {
+                    (Some(left), Some(right)) => {
+                        if left.as_ref().val <= right.as_ref().val {
+                            a = left.as_ref().next;
+                            left
+                        } else {
+                            b = right.as_ref().next;
+                            right
+                        }
+                    }
+                    (Some(left), None) => {
+                        a = left.as_ref().next;
+                        left
+                    }
+                    (None, Some(right)) => {
+                        b = right.as_ref().next;
+                        right
+                    }
+                    (None, None) => unreachable!(),
+                };
+                node.as_mut().next = None;
+                match merged.end {
+                    Some(mut tail) => tail.as_mut().next = Some(node),
+                    None => merged.start = Some(node),
+                }
+                merged.end = Some(node);
+                merged.length += 1;
+            }
         }
-	}
+        merged
+    }
 }
 
 impl<T> Display for LinkedList<T>
